@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Store - Eletrônicos Premium</title>
+    <style>
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg: #f4f7f6;
+            --text: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 50px; }
+
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo h1 { font-size: 1.5rem; font-weight: bold; }
+        .logo span { font-weight: lighter; opacity: 0.8; font-size: 0.8rem; display: block; }
+
+        .cart-btn {
+            background: white;
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-btn:hover { transform: scale(1.05); }
+        .badge { background: #ff4757; color: white; padding: 2px 8px; border-radius: 50%; font-size: 0.8rem; }
+
+        /* Grid de Produtos */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+
+        .section-title { margin-bottom: 20px; border-left: 5px solid var(--primary); padding-left: 15px; }
+
+        .produtos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 25px;
+        }
+
+        .produto-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .produto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .tag-cat { background: #e1e1e1; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; color: #666; }
+        .card-code { font-size: 0.7rem; color: #aaa; }
+
+        .produto-card h3 { font-size: 1.2rem; margin-bottom: 10px; color: #2d3436; }
+        .produto-card .preco { font-size: 1.6rem; color: #27ae60; font-weight: bold; margin: 15px 0; }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-add:hover { background: var(--secondary); }
+
+        /* Modal do Carrinho */
+        .modal-overlay {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: flex-end;
+        }
+
+        .carrinho-modal {
+            background: white;
+            width: 400px;
+            height: 100%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .btn-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+
+        .carrinho-items { flex: 1; overflow-y: auto; }
+        .item-carrinho { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f4f4f4; }
+        .item-info h4 { font-size: 0.95rem; }
+        .item-info span { font-size: 0.85rem; color: #888; }
+
+        .carrinho-footer { border-top: 2px solid #eee; padding-top: 20px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; }
+        .btn-checkout { background: #27ae60; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+        .btn-checkout:hover { background: #219150; }
+
+
+        .loading, .empty-state { text-align: center; padding: 40px; color: #888; grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <h1>Tech Store</h1>
+        <span>Sistema Integrado Spring Boot</span>
+    </div>
+    <button class="cart-btn" onclick="abrirCarrinho()">
+        🛒 Meu Carrinho
+        <span id="cart-count" class="badge">0</span>
+    </button>
+</header>
+
+<div class="container">
+    <h2 class="section-title">Produtos em Destaque</h2>
+
+    <div id="produtos-lista" class="produtos-grid">
+        <div class="loading">Carregando catálogo do servidor...</div>
+    </div>
+</div>
+
+<div id="modal-carrinho" class="modal-overlay">
+    <div class="carrinho-modal">
+        <div class="modal-header">
+            <h2>Seu Carrinho</h2>
+            <button class="btn-close" onclick="fecharCarrinho()">×</button>
+        </div>
+        <div id="itens-carrinho" class="carrinho-items">
+        </div>
+        <div class="carrinho-footer">
+            <div class="total-row">
+                <span>Total:</span>
+                <span id="total-carrinho">R$ 0,00</span>
+            </div>
+            <button class="btn-checkout" onclick="finalizarCompra()">Finalizar Compra</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    let catalogo = []; // Guarda os dados que vêm do Java
+    let carrinho = []; // Guarda o que o usuário escolheu
+
+    document.addEventListener("DOMContentLoaded", () => {
+        buscarProdutosDoJava();
+        carregarCarrinhoSalvo(); // <--- NOVO: Recupera o carrinho antigo
+    });
+
+    function salvarLocalmente() {
+        localStorage.setItem('carrinho_techstore', JSON.stringify(carrinho));
+    }
+
+    function carregarCarrinhoSalvo() {
+        const salvo = localStorage.getItem('carrinho_techstore');
+        if (salvo) {
+            carrinho = JSON.parse(salvo);
+            atualizarCarrinhoUI(); // Atualiza a bolinha vermelha e o modal
+        }
+    }
+
+    async function buscarProdutosDoJava() {
+        try {
+            const resposta = await fetch('/api/produtos');
+
+            if (!resposta.ok) throw new Error("Erro na conexão");
+
+            catalogo = await resposta.json();
+            renderizarCatalogo();
+
+        } catch (erro) {
+            console.error(erro);
+            document.getElementById('produtos-lista').innerHTML =
+                `<div class="empty-state">❌ Erro ao conectar com o servidor Java.<br>Verifique se o IntelliJ está rodando.</div>`;
+        }
+    }
+
+    function renderizarCatalogo() {
+        const lista = document.getElementById('produtos-lista');
+        lista.innerHTML = '';
+
+        if (catalogo.length === 0) {
+            lista.innerHTML = '<div class="empty-state">Nenhum produto cadastrado no estoque.</div>';
+            return;
+        }
+
+        catalogo.forEach(produto => {
+            const div = document.createElement('div');
+            div.className = 'produto-card';
+            div.innerHTML = `
+                <div class="card-header">
+                    <span class="tag-cat">${produto.categoria}</span>
+                    <span class="card-code">#${produto.codigo}</span>
+                </div>
+                <h3>${produto.nome}</h3>
+                <div class="preco">R$ ${produto.preco.toFixed(2)}</div>
+                <button class="btn-add" onclick="adicionarItem('${produto.codigo}')">
+                    Adicionar ao Carrinho
+                </button>
+            `;
+            lista.appendChild(div);
+        });
+    }
+
+
+    function adicionarItem(codigo) {
+        const produto = catalogo.find(p => p.codigo === codigo);
+
+        // Verifica se já está no carrinho
+        const itemExistente = carrinho.find(item => item.codigo === codigo);
+
+        if (itemExistente) {
+            itemExistente.qtd++;
+        } else {
+            carrinho.push({ ...produto, qtd: 1 });
+        }
+
+        salvarLocalmente(); // <--- NOVO: Salva assim que adiciona
+        atualizarCarrinhoUI();
+        abrirCarrinho();
+    }
+
+    function removerItem(codigo) {
+        carrinho = carrinho.filter(item => item.codigo !== codigo);
+        salvarLocalmente(); // <--- NOVO: Salva assim que remove
+        atualizarCarrinhoUI();
+    }
+
+    function atualizarCarrinhoUI() {
+        const totalItens = carrinho.reduce((acc, item) => acc + item.qtd, 0);
+        document.getElementById('cart-count').innerText = totalItens;
+
+        const listaCarrinho = document.getElementById('itens-carrinho');
+        listaCarrinho.innerHTML = '';
+        let totalFinanceiro = 0;
+
+        if (carrinho.length === 0) {
+            listaCarrinho.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px">Seu carrinho está vazio.</div>';
+        }
+
+        carrinho.forEach(item => {
+            const subtotal = item.preco * item.qtd;
+            totalFinanceiro += subtotal;
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item-carrinho';
+            itemDiv.innerHTML = `
+                <div class="item-info">
+                    <h4>${item.nome}</h4>
+                    <span>${item.qtd}x R$ ${item.preco.toFixed(2)}</span>
+                </div>
+                <div>
+                    <strong>R$ ${subtotal.toFixed(2)}</strong>
+                    <button onclick="removerItem('${item.codigo}')" style="border:none; background:none; color:red; cursor:pointer; margin-left:10px;">🗑️</button>
+                </div>
+            `;
+            listaCarrinho.appendChild(itemDiv);
+        });
+
+        document.getElementById('total-carrinho').innerText = `R$ ${totalFinanceiro.toFixed(2)}`;
+    }
+
+    function finalizarCompra() {
+        if (carrinho.length === 0) {
+            alert("Seu carrinho está vazio!");
+            return;
+        }
+        alert(`Compra finalizada com sucesso!\nTotal: ${document.getElementById('total-carrinho').innerText}`);
+
+        carrinho = []; // Limpa a variável
+        localStorage.removeItem('carrinho_techstore'); // <--- NOVO: Limpa a memória do navegador
+
+        atualizarCarrinhoUI();
+        fecharCarrinho();
+    }
+
+    function abrirCarrinho() {
+        document.getElementById('modal-carrinho').style.display = 'flex';
+    }
+
+    function fecharCarrinho() {
+        document.getElementById('modal-carrinho').style.display = 'none';
+    }
+
+    document.getElementById('modal-carrinho').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-carrinho') fecharCarrinho();
+    });
+</script>
+</body>
+</html>
