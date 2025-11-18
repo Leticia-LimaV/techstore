@@ -27,9 +27,4 @@ O sistema estará disponível em:
 * Adição de itens ao carrinho (com persistência local).
 * Cálculo de totais.
 * Simulação de finalização de compra.
-Desça a página e clique no botão verde Commit changes.
 
-PASSO 2: O que escrever no seu Relatório (Word/PDF)
-No seu trabalho escrito, na parte de "Planejamento" ou junto com o link, você escreve uma frase simples explicando isso:
-
-"O código-fonte está hospedado no GitHub. Para testar a aplicação, é necessário clonar o repositório, executar a classe main do Spring Boot e acessar localhost:8080/index.html no navegador, conforme detalhado no arquivo README do repositório."
